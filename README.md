@@ -1,4 +1,4 @@
-# 酷玩 Parquet
+# 酷玩 Parquet (alpha)
 
 Welcome to Coolplay Parquet!
 
