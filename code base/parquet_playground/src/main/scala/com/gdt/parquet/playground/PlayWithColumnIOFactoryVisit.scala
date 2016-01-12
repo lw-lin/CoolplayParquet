@@ -42,10 +42,10 @@ object PlayWithColumnIOFactoryVisit extends TempFileUtil {
     sc.parallelize(1 to 3, 1).map(i => (i, i.toString)).toDF("c", "b")
       .write.parquet(pathTwo)
 
-    sqlContext.read.option("mergeSchema", "true").parquet(pathOne)//, pathTwo)
+   val df = sqlContext.read.option("mergeSchema", "true").parquet(pathOne)//, pathTwo)
       .filter("a = 1")
       .selectExpr("b") // 注释掉此行将会复现错误
       // .selectExpr("c", "b", "a") // 注释掉此行将会复现错误
-      .show()
+      df.show()
   }
 }
