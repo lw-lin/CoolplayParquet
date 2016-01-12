@@ -26,6 +26,10 @@ object PlayWithColumnIOFactoryVisit extends TempFileUtil {
     val conf = new SparkConf()
     conf.setAppName(this.getClass.getSimpleName)
     conf.setMaster("local[2]")
+
+    /* Filter pushdown */
+    conf.set("spark.sql.parquet.filterPushdown", true.toString)
+
     val sc = new SparkContext(conf)
     val sqlContext = new SQLContext(sc)
     import sqlContext.implicits._
@@ -33,13 +37,14 @@ object PlayWithColumnIOFactoryVisit extends TempFileUtil {
 
     val pathOne = tempPath.toString + "/table1"
     val pathTwo = tempPath.toString + "/table2"
-    (1 to 3).map(i => (i, i.toString)).toDF("a", "b").write.parquet(pathOne)
-    (1 to 3).map(i => (i, i.toString)).toDF("c", "b").write.parquet(pathTwo)
+    sc.parallelize(1 to 3, 1).map(i => (i, i.toString)).toDF("a", "b")
+      .write.parquet(pathOne)
+    sc.parallelize(1 to 3, 1).map(i => (i, i.toString)).toDF("c", "b")
+      .write.parquet(pathTwo)
 
-
-    conf.set("spark.sql.parquet.filterPushdown", true.toString)
-    sqlContext.read.option("mergeSchema", "true").parquet(pathOne, pathTwo)
-      .filter("c = 1")
+    sqlContext.read.option("mergeSchema", "true").parquet(pathOne)//, pathTwo)
+      .filter("a = 1")
+      .selectExpr("b") // 注释掉此行将会复现错误
       // .selectExpr("c", "b", "a") // 注释掉此行将会复现错误
       .show()
   }
